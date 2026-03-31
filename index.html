@@ -20,7 +20,6 @@
             min-height: 100vh;
         }
 
-        /* 移除最大尺寸限制，保证图片原始尺寸显示 */
         .image-item {
             position: relative;
             display: flex;
@@ -33,7 +32,6 @@
             height: auto !important;
             min-width: 120px;
             min-height: 120px;
-            /* 移除 max-width/max-height 限制 */
             transition: border-radius 0.2s;
             touch-action: none;
         }
@@ -42,7 +40,6 @@
             display: block;
             width: auto !important;
             height: auto !important;
-            /* 移除 max-width/max-height 限制，保证原始尺寸 */
             object-fit: contain;
             background-color: #1a1a1a;
             position: relative;
@@ -115,7 +112,6 @@
             background-color: #f44336;
         }
 
-        /* 横向布局（唯一） */
         .image-container.horizontal {
             display: flex;
             flex-direction: row;
@@ -128,7 +124,6 @@
 
         .image-container.horizontal .image-item {
             flex: 0 0 auto;
-            /* 移除 max-width 限制 */
             width: auto;
             height: auto;
         }
@@ -297,7 +292,6 @@
             padding: 50px;
             display: inline-block;
             z-index: 1;
-            /* 移除导出容器的最大宽度限制 */
             width: auto;
         }
 
@@ -347,7 +341,6 @@
 
         @media (max-width: 768px) {
             .action-area { flex-direction: column; bottom: 20px; right: 20px; }
-            /* 移动端保留合理的最大宽度，避免溢出屏幕 */
             .image-item {
                 max-width: 90vw;
             }
@@ -386,7 +379,7 @@
     </div>
 
     <button class="add-image-btn" id="addImageBtn">+ 添加新图片</button>
-    <div class="multi-upload-tip">✨ 拖拽图片到任意框上传 | 图片保持原始比例无裁剪</div>
+    <div class="multi-upload-tip">✨ 拖拽图片到任意框上传 | 超过700px自动等比例缩小</div>
 
     <div id="export-container">
         <div class="title-display" id="exportTitle">自定义文字</div>
@@ -420,6 +413,12 @@
             let selectedQuality = 'lossless';
             let isInserting = false;
 
+            // ====================== 核心修改 ======================
+            // 超过 700px 等比例缩小，小于等于 700px 保持原图
+            const MAX_IMG_WIDTH = 700;
+            const MAX_IMG_HEIGHT = 700;
+            // ======================================================
+
             const titleInput = document.getElementById('titleInput');
             const exportTitle = document.getElementById('exportTitle');
             const loading = document.getElementById('loading');
@@ -434,13 +433,45 @@
 
             let dragSource = null;
 
+            // 等比例压缩图片：超过700缩小，不超过保持原图
+            function compressImageBySize(file) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.src = e.target.result;
+                        img.onload = function() {
+                            let w = img.width;
+                            let h = img.height;
+
+                            // 超过700才等比例缩小
+                            if (w > MAX_IMG_WIDTH || h > MAX_IMG_HEIGHT) {
+                                const scale = Math.min(MAX_IMG_WIDTH / w, MAX_IMG_HEIGHT / h);
+                                w = Math.floor(w * scale);
+                                h = Math.floor(h * scale);
+                            }
+
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = w;
+                            canvas.height = h;
+                            ctx.drawImage(img, 0, 0, w, h);
+                            const compressedBase64 = canvas.toDataURL('image/png', 1.0);
+                            resolve(compressedBase64);
+                        };
+                        img.onerror = () => resolve(e.target.result);
+                    };
+                    reader.onerror = () => { alert('读取失败'); resolve(''); };
+                    reader.readAsDataURL(file);
+                });
+            }
+
             function getImageCount() {
                 return document.querySelectorAll('.image-item').length;
             }
 
             function reindexImageBoxes() {
                 const allItems = Array.from(imageContainer.children).filter(el => el.classList.contains('image-item'));
-
                 const newBase64Map = {};
                 allItems.forEach((box, idx) => {
                     const newIndex = idx + 1;
@@ -601,15 +632,6 @@
                 alert(`间距 ${gapInput.value}px，圆角 ${radiusInput.value}px 已应用`);
             }
 
-            function fileToBase64(file) {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = e => resolve(e.target.result);
-                    reader.onerror = () => { alert('读取失败'); resolve(''); };
-                    reader.readAsDataURL(file);
-                });
-            }
-
             async function handleFilesToTarget(files, targetIndex) {
                 const imageFiles = Array.from(files).filter(f => f.type.includes('image/'));
                 if (imageFiles.length === 0) {
@@ -620,7 +642,7 @@
                 loading.style.display = 'block';
 
                 const firstFile = imageFiles[0];
-                let base64 = await fileToBase64(firstFile);
+                let base64 = await compressImageBySize(firstFile);
                 if (base64) {
                     renderImage(targetIndex, base64);
                     imageBase64List[targetIndex] = base64;
@@ -639,7 +661,7 @@
                         addNewImage();
                         emptyIdx = getImageCount();
                     }
-                    base64 = await fileToBase64(file);
+                    base64 = await compressImageBySize(file);
                     if (base64) {
                         renderImage(emptyIdx, base64);
                         imageBase64List[emptyIdx] = base64;
@@ -737,8 +759,8 @@
             function getQualityConfig() {
                 switch(selectedQuality) {
                     case 'standard': return { scale: 1, quality: 0.7, type: 'image/jpeg', suffix: '标清' };
-                    case 'hd': return { scale: 1, quality: 0.9, type: 'image/jpeg', suffix: '高清' }; // 移除scale:2，避免放大导致裁剪
-                    default: return { scale: 1, quality: 1.0, type: 'image/png', suffix: '无损' }; // 缩放比例改为1，保证原始尺寸
+                    case 'hd': return { scale: 1, quality: 0.9, type: 'image/jpeg', suffix: '高清' };
+                    default: return { scale: 1, quality: 1.0, type: 'image/png', suffix: '无损' };
                 }
             }
 
@@ -746,19 +768,18 @@
                 const cfg = getQualityConfig();
                 const container = document.getElementById('export-container');
                 
-                // 优化html2canvas配置，禁用尺寸限制
                 const canvas = await html2canvas(container, { 
                     scale: cfg.scale, 
                     useCORS: true, 
                     allowTaint: true, 
                     logging: false,
-                    windowWidth: container.scrollWidth, // 使用容器实际宽度
-                    windowHeight: container.scrollHeight, // 使用容器实际高度
+                    windowWidth: container.scrollWidth,
+                    windowHeight: container.scrollHeight,
                     x: 0,
                     y: 0,
                     width: container.scrollWidth,
                     height: container.scrollHeight,
-                    imageTimeout: 0, // 禁用图片加载超时
+                    imageTimeout: 0,
                     removeContainer: false
                 });
                 
@@ -829,7 +850,6 @@
                     try {
                         const cfg = getQualityConfig();
                         const container = document.getElementById('export-container');
-                        // 优化html2canvas配置，保证完整渲染
                         const canvas = await html2canvas(container, { 
                             scale: cfg.scale, 
                             useCORS: true, 
