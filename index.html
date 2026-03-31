@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>今日工作成果</title>
-    <!-- 添加自定义图标，文件名为 favicon.png，建议尺寸 32x32 像素，透明背景 -->
     <link rel="icon" type="image/png" href="favicon.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -21,7 +20,7 @@
             min-height: 100vh;
         }
 
-        /* 图片容器完全适配原图比例 */
+        /* 移除最大尺寸限制，保证图片原始尺寸显示 */
         .image-item {
             position: relative;
             display: flex;
@@ -34,8 +33,7 @@
             height: auto !important;
             min-width: 120px;
             min-height: 120px;
-            max-width: 800px;
-            max-height: 70vh;
+            /* 移除 max-width/max-height 限制 */
             transition: border-radius 0.2s;
             touch-action: none;
         }
@@ -44,8 +42,7 @@
             display: block;
             width: auto !important;
             height: auto !important;
-            max-width: 100%;
-            max-height: 100%;
+            /* 移除 max-width/max-height 限制，保证原始尺寸 */
             object-fit: contain;
             background-color: #1a1a1a;
             position: relative;
@@ -54,7 +51,6 @@
             border-radius: inherit;
         }
 
-        /* 占位符样式：垂直居中，包含自定义图案和文字 */
         .placeholder {
             width: 100%;
             height: 100%;
@@ -70,12 +66,10 @@
             padding: 20px;
         }
 
-        /* 自定义图案图片，请准备 placeholder-icon.png，建议尺寸 24x24 像素，透明背景 */
         .placeholder-icon {
             width: 24px;
             height: 24px;
             background: transparent;
-            /* 如果图片未加载，显示一个简单的占位方块 */
             object-fit: contain;
         }
 
@@ -134,7 +128,7 @@
 
         .image-container.horizontal .image-item {
             flex: 0 0 auto;
-            max-width: 400px;
+            /* 移除 max-width 限制 */
             width: auto;
             height: auto;
         }
@@ -162,7 +156,6 @@
         }
         .title-input:focus { border-color: #2196F3; }
         
-        /* 隐藏确认按钮后面的标题显示 */
         #titleDisplay {
             display: none;
         }
@@ -175,7 +168,6 @@
             margin-bottom: 20px;
         }
 
-        /* 布局选择器：只显示一个按钮 */
         .layout-selector {
             margin: 20px 0;
             display: flex;
@@ -305,7 +297,8 @@
             padding: 50px;
             display: inline-block;
             z-index: 1;
-            max-width: 100%;
+            /* 移除导出容器的最大宽度限制 */
+            width: auto;
         }
 
         .add-image-btn {
@@ -342,7 +335,6 @@
             display: none;
         }
 
-        /* 拖拽样式 */
         .image-item.drag-over {
             background-color: rgba(33, 150, 243, 0.2);
             outline: 2px dashed #2196F3;
@@ -355,6 +347,13 @@
 
         @media (max-width: 768px) {
             .action-area { flex-direction: column; bottom: 20px; right: 20px; }
+            /* 移动端保留合理的最大宽度，避免溢出屏幕 */
+            .image-item {
+                max-width: 90vw;
+            }
+            .image-item img {
+                max-width: 90vw;
+            }
         }
     </style>
 </head>
@@ -367,7 +366,6 @@
         <div class="title-display" id="titleDisplay" style="display:none;">自定义文字</div>
     </div>
 
-    <!-- 布局选择器：只显示“拼接图片” -->
     <div class="layout-selector">
         <div class="layout-label">布局方向：</div>
         <button class="layout-btn active" data-layout="horizontal">拼接图片</button>
@@ -399,7 +397,6 @@
                     <button class="action-icon delete-icon" title="删除当前图片">×</button>
                 </div>
                 <div class="placeholder">
-                    <!-- 使用自定义图案图片，文件名 placeholder-icon.png，建议尺寸 24x24 透明背景 -->
                     <img src="placeholder-icon.png" alt="" class="placeholder-icon" onerror="this.style.display='none'">
                     <div>拖拽图片上传</div>
                 </div>
@@ -419,7 +416,6 @@
 
     <script>
         (function() {
-            // ---------- 数据 ----------
             let imageBase64List = { 1: '' };
             let selectedQuality = 'lossless';
             let isInserting = false;
@@ -438,7 +434,6 @@
 
             let dragSource = null;
 
-            // ---------- 辅助函数 ----------
             function getImageCount() {
                 return document.querySelectorAll('.image-item').length;
             }
@@ -463,7 +458,7 @@
                 allItems.forEach(box => {
                     const idx = box.dataset.index;
                     const base64 = imageBase64List[idx];
-                    const existingImg = box.querySelector('img:not(.placeholder-icon)'); // 排除图案图标
+                    const existingImg = box.querySelector('img:not(.placeholder-icon)');
                     const placeholder = box.querySelector('.placeholder');
                     if (base64) {
                         if (placeholder) placeholder.remove();
@@ -530,24 +525,15 @@
                 }
             }
 
-            // 修改：在目标图片框之后插入新框
             function insertImageAfter(targetIndex) {
                 if (isInserting) return;
                 isInserting = true;
                 try {
                     const targetBox = document.getElementById(`imageBox${targetIndex}`);
                     if (!targetBox) return;
-                    // 找到目标框的下一个兄弟节点
                     const nextSibling = targetBox.nextElementSibling;
-                    // 生成新框，插入到 nextSibling 之前（即 targetBox 之后）
-                    // 如果 nextSibling 为 null，则 appendChild 相当于追加到最后
                     const newIndex = getImageCount() + 1;
-                    const newBox = createImageBox(newIndex, nextSibling); // 如果 nextSibling 存在，插入到它前面；否则 append
-                    // 因为 createImageBox 中 insertBefore 参数为 null 时等同于 appendChild，所以可以这样用
-                    // 但 createImageBox 内部使用了 insertBefore，如果传 null 会出错？检查 createImageBox 逻辑：如果 insertBefore 为 null，则执行 appendChild。是的，我们传递 nextSibling，如果 nextSibling 为 null，insertBefore(box, null) 等同于 appendChild。完美。
-                    // 注意：createImageBox 中直接使用 imageContainer.insertBefore(box, insertBefore); 如果 insertBefore 为 null，则插入到末尾，符合预期。
-                    
-                    // 重新编号，因为插入了一个新框，所有索引需要更新
+                    const newBox = createImageBox(newIndex, nextSibling);
                     reindexImageBoxes();
                 } finally {
                     isInserting = false;
@@ -624,7 +610,6 @@
                 });
             }
 
-            // 统一的多文件上传处理（仅拖拽）
             async function handleFilesToTarget(files, targetIndex) {
                 const imageFiles = Array.from(files).filter(f => f.type.includes('image/'));
                 if (imageFiles.length === 0) {
@@ -665,7 +650,6 @@
                 initImageBoxEvents();
             }
 
-            // 初始化图片事件（仅拖拽上传）
             function initImageBoxEvents() {
                 const boxes = document.querySelectorAll('.image-item');
                 boxes.forEach(box => {
@@ -710,7 +694,6 @@
                 });
             }
 
-            // 拖拽换位
             function initDragDropSwap() {
                 const boxes = document.querySelectorAll('.image-item');
                 boxes.forEach(box => {
@@ -751,20 +734,33 @@
                 initImageBoxEvents();
             }
 
-            // 质量配置
             function getQualityConfig() {
                 switch(selectedQuality) {
                     case 'standard': return { scale: 1, quality: 0.7, type: 'image/jpeg', suffix: '标清' };
-                    case 'hd': return { scale: 2, quality: 0.9, type: 'image/jpeg', suffix: '高清' };
-                    default: return { scale: 3, quality: 1.0, type: 'image/png', suffix: '无损' };
+                    case 'hd': return { scale: 1, quality: 0.9, type: 'image/jpeg', suffix: '高清' }; // 移除scale:2，避免放大导致裁剪
+                    default: return { scale: 1, quality: 1.0, type: 'image/png', suffix: '无损' }; // 缩放比例改为1，保证原始尺寸
                 }
             }
 
-            // 复制功能
             async function copyImageToClipboard() {
                 const cfg = getQualityConfig();
                 const container = document.getElementById('export-container');
-                const canvas = await html2canvas(container, { scale: cfg.scale, useCORS: true, allowTaint: true, logging: false });
+                
+                // 优化html2canvas配置，禁用尺寸限制
+                const canvas = await html2canvas(container, { 
+                    scale: cfg.scale, 
+                    useCORS: true, 
+                    allowTaint: true, 
+                    logging: false,
+                    windowWidth: container.scrollWidth, // 使用容器实际宽度
+                    windowHeight: container.scrollHeight, // 使用容器实际高度
+                    x: 0,
+                    y: 0,
+                    width: container.scrollWidth,
+                    height: container.scrollHeight,
+                    imageTimeout: 0, // 禁用图片加载超时
+                    removeContainer: false
+                });
                 
                 if (navigator.clipboard && window.ClipboardItem) {
                     const blob = await new Promise(resolve => canvas.toBlob(resolve, cfg.type, cfg.quality));
@@ -808,7 +804,6 @@
                 }
             }
 
-            // 初始化所有
             function initAll() {
                 syncTitle();
 
@@ -833,7 +828,22 @@
                     loading.style.display = 'block';
                     try {
                         const cfg = getQualityConfig();
-                        const canvas = await html2canvas(document.getElementById('export-container'), { scale: cfg.scale, useCORS: true, allowTaint: true, logging: false });
+                        const container = document.getElementById('export-container');
+                        // 优化html2canvas配置，保证完整渲染
+                        const canvas = await html2canvas(container, { 
+                            scale: cfg.scale, 
+                            useCORS: true, 
+                            allowTaint: true, 
+                            logging: false,
+                            windowWidth: container.scrollWidth,
+                            windowHeight: container.scrollHeight,
+                            x: 0,
+                            y: 0,
+                            width: container.scrollWidth,
+                            height: container.scrollHeight,
+                            imageTimeout: 0,
+                            removeContainer: false
+                        });
                         const link = document.createElement('a');
                         link.download = `${exportTitle.textContent}_${cfg.suffix}.${cfg.type.split('/')[1]}`;
                         link.href = canvas.toDataURL(cfg.type, cfg.quality);
