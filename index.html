@@ -2,10 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>今日工作成果</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>今日工作汇总</title>
     <link rel="icon" type="image/png" href="favicon.png">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="shortcut icon" href="favicon.ico">
     <style>
         * {
             margin: 0;
@@ -15,880 +15,811 @@
 
         body {
             background-color: #1f1e25;
-            padding: 50px;
-            font-family: "Microsoft YaHei", sans-serif;
+            padding: 1.2rem 1rem;
+            font-family: system-ui, "Microsoft YaHei", "Segoe UI", sans-serif;
             min-height: 100vh;
+            max-width: 1600px;
+            margin: 0 auto;
         }
 
-        .image-item {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #222;
-            border-radius: 0;
-            overflow: hidden;
-            width: auto !important;
-            height: auto !important;
-            min-width: 120px;
-            min-height: 120px;
-            transition: border-radius 0.2s;
-            touch-action: none;
-        }
-
-        .image-item img {
-            display: block;
-            width: auto !important;
-            height: auto !important;
-            object-fit: contain;
-            background-color: #1a1a1a;
-            position: relative;
-            z-index: 1;
-            pointer-events: none;
-            border-radius: inherit;
-        }
-
-        .placeholder {
+        .content-wrapper {
             width: 100%;
-            height: 100%;
-            min-height: 180px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 18px;
             flex-direction: column;
-            gap: 10px;
-            background-color: #2a2a2a;
-            padding: 20px;
+            gap: 0;
         }
 
-        .placeholder-icon {
-            width: 24px;
-            height: 24px;
-            background: transparent;
-            object-fit: contain;
-        }
-
-        .image-actions {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 8px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 999;
-            pointer-events: auto;
-        }
-
-        .image-item:hover .image-actions {
-            opacity: 1;
-        }
-
-        .action-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 16px;
-            border: none;
-            transition: all 0.2s;
-            pointer-events: auto;
-            z-index: 1000;
-        }
-
-        .action-icon:hover {
-            background-color: #2196F3;
-            transform: scale(1.1);
-        }
-
-        .delete-icon:hover {
-            background-color: #f44336;
-        }
-
-        .image-container.horizontal {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            align-items: flex-start;
-            gap: 15px;
-            overflow: visible;
-            padding: 10px 0;
-        }
-
-        .image-container.horizontal .image-item {
-            flex: 0 0 auto;
-            width: auto;
-            height: auto;
-        }
-
-        .image-item {
-            align-self: flex-start;
-        }
-
+        /* 标题区 */
         .title-container {
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
+            padding: 0;
         }
         .title-input {
             padding: 8px 12px;
-            font-size: 36px;
+            font-size: 28px;
             background-color: #333;
             color: #cec5b1;
             border: 1px solid #666;
-            border-radius: 6px;
-            width: 300px;
+            border-radius: 12px;
+            width: 260px;
             outline: none;
+            flex: 1;
+            max-width: 400px;
+            font-weight: 500;
         }
-        .title-input:focus { border-color: #2196F3; }
-        
-        #titleDisplay {
-            display: none;
+        .title-input:focus { border-color: #2196F3; box-shadow: 0 0 0 2px rgba(33,150,243,0.2);}
+        .custom-btn {
+            padding: 8px 18px;
+            border: 1px solid #666;
+            border-radius: 40px;
+            background-color: #333;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
+        .custom-btn:hover { border-color: #2196F3; background-color: #444; transform: scale(0.97);}
 
-        #exportTitle {
-            color: #cec5b1;
-            font-size: 36px;
-            font-family: "Microsoft YaHei", Regular;
-            min-width: 200px;
-            margin-bottom: 20px;
-        }
-
-        .layout-selector {
-            margin: 20px 0;
+        /* 控制栏统一样式 */
+        .layout-selector, .settings-panel {
+            margin: 8px 0;
             display: flex;
             align-items: center;
             gap: 15px;
-            padding: 15px;
+            flex-wrap: wrap;
+            padding: 12px 16px;
             background-color: #292830;
-            border-radius: 8px;
+            border-radius: 20px;
+            width: 100%;
         }
-        .layout-label { color: #cec5b1; font-size: 16px; min-width: 80px; }
+        .layout-label, .setting-label { color: #cec5b1; font-size: 14px; font-weight: 500; min-width: 70px; }
         .layout-btn {
-            padding: 8px 20px;
+            padding: 6px 20px;
             border: 1px solid #666;
-            border-radius: 4px;
+            border-radius: 40px;
             background-color: #333;
             color: #fff;
             font-size: 14px;
             cursor: default;
-            transition: none;
+            background: #2c3e66;
+            border-color: #2196F3;
         }
-        .layout-btn.active { border-color: #2196F3; background-color: #444; }
-
-        .settings-panel {
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            padding: 15px;
-            background-color: #292830;
-            border-radius: 8px;
-        }
-        .setting-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 300px;
-        }
-        .setting-label { color: #cec5b1; font-size: 16px; min-width: 80px; }
         .setting-input {
             padding: 6px 10px;
             font-size: 14px;
             background-color: #333;
             color: #cec5b1;
             border: 1px solid #666;
-            border-radius: 4px;
-            width: 80px;
-            outline: none;
+            border-radius: 8px;
+            width: 70px;
+            text-align: center;
         }
         .setting-slider {
             flex: 1;
-            height: 6px;
+            height: 5px;
             background-color: #555;
-            border-radius: 3px;
+            border-radius: 5px;
             -webkit-appearance: none;
         }
         .setting-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: #2196F3;
             cursor: pointer;
         }
         .apply-btn {
-            padding: 6px 16px;
+            padding: 6px 20px;
             border: 1px solid #666;
-            border-radius: 4px;
-            background-color: #333;
-            color: #fff;
-            font-size: 14px;
+            border-radius: 40px;
+            background-color: #3a3a44;
+            color: white;
             cursor: pointer;
+            transition: 0.2s;
         }
-        .apply-btn:hover { border-color: #2196F3; background-color: #444; }
-        .custom-btn {
-            padding: 8px 16px;
-            border: 1px solid #666;
-            border-radius: 6px;
-            background-color: #333;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .custom-btn:hover { border-color: #2196F3; background-color: #444; }
+        .apply-btn:hover { background-color: #2196F3; border-color: #2196F3;}
 
+        .add-image-btn {
+            margin: 8px 0 6px;
+            padding: 10px 20px;
+            border: 1px solid #2196F3;
+            border-radius: 40px;
+            background-color: #333;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            width: fit-content;
+            font-weight: 500;
+        }
+        .add-image-btn:hover { background-color: #2196F3; transform: translateY(-2px);}
+        .multi-upload-tip {
+            color: #cec5b1;
+            font-size: 13px;
+            margin: 4px 0 12px 0;
+            padding: 6px 12px;
+            background-color: rgba(51,51,51,0.6);
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        /* 瀑布流容器 — 相对定位，所有卡片绝对定位 */
+        .masonry-container {
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+            transition: height 0.2s ease;
+        }
+
+        /* 单个卡片：绝对定位 + 圆角 + 过渡 */
+        .masonry-card {
+            position: absolute;
+            box-sizing: border-box;
+            transition: left 0.25s ease, top 0.25s ease, width 0.1s;
+            background-color: #2a2a2a;
+            border-radius: 0px;  /* 动态控制 */
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            cursor: grab;
+            user-select: none;
+        }
+        .masonry-card:active { cursor: grabbing; }
+        .masonry-card.drag-over {
+            outline: 3px solid #2196F3;
+            filter: brightness(1.05);
+            background-color: rgba(33,150,243,0.1);
+        }
+        .masonry-card img {
+            display: block;
+            width: 100%;
+            height: auto;
+            background-color: #1e1e24;
+            pointer-events: none;  /* 让按钮可点击穿透不影响 */
+            transition: opacity 0.2s;
+        }
+        /* 操作按钮悬浮层 */
+        .card-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 20;
+        }
+        .masonry-card:hover .card-actions {
+            opacity: 1;
+        }
+        .action-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            transition: all 0.2s;
+        }
+        .action-icon:hover {
+            background-color: #2196F3;
+            transform: scale(1.08);
+        }
+        .delete-icon:hover { background-color: #f44336; }
+
+        /* 空白占位符 (无图片时) */
+        .placeholder-card {
+            width: 100%;
+            height: 100%;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #2a2a2a;
+            color: #aaa;
+            gap: 12px;
+            font-size: 14px;
+            text-align: center;
+            pointer-events: none;
+        }
+        .placeholder-icon {
+            width: 48px;
+            height: 48px;
+            opacity: 0.6;
+        }
+
+        #exportTitle {
+            color: #cec5b1;
+            font-size: 32px;
+            font-weight: 600;
+            margin: 0 0 18px 0;
+            padding: 0 0 8px 0;
+            line-height: 1.2;
+            word-break: break-word;
+            border-bottom: 2px solid rgba(33,150,243,0.4);
+            display: inline-block;
+        }
+
+        /* 右下角操作区 */
         .action-area {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
+            bottom: 24px;
+            right: 24px;
             display: flex;
-            gap: 15px;
-            z-index: 100;
-            align-items: center;
-            flex-wrap: wrap;
+            gap: 12px;
+            z-index: 200;
+            background: rgba(31,30,37,0.92);
+            backdrop-filter: blur(12px);
+            padding: 12px 20px;
+            border-radius: 60px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         .quality-select {
             display: flex;
             gap: 8px;
-            background-color: #333;
-            padding: 8px;
-            border-radius: 6px;
+            background-color: #2c2c34;
+            padding: 4px 10px;
+            border-radius: 40px;
         }
         .quality-btn {
-            padding: 6px 12px;
+            padding: 6px 14px;
             border: none;
-            border-radius: 4px;
-            font-size: 14px;
+            border-radius: 30px;
+            font-size: 13px;
             cursor: pointer;
+            background: #444;
+            color: #ddd;
+            transition: 0.2s;
         }
         .quality-btn.active { background-color: #2196F3; color: white; }
-        .quality-btn:not(.active) { background-color: #555; color: #ccc; }
         .action-btn {
-            padding: 12px 24px;
+            padding: 8px 20px;
             border: none;
-            border-radius: 6px;
-            font-size: 16px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         .download-btn { background-color: #2196F3; color: white; }
         .copy-btn { background-color: #FF9800; color: white; }
-        .action-btn:hover { opacity: 0.9; transform: translateY(-2px); }
-
-        #export-container {
-            position: relative;
-            background-color: #1f1e25;
-            padding: 50px;
-            display: inline-block;
-            z-index: 1;
-            width: auto;
-        }
-
-        .add-image-btn {
-            margin: 20px 0;
-            padding: 10px 20px;
-            border: 1px solid #2196F3;
-            border-radius: 6px;
-            background-color: #333;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .add-image-btn:hover { background-color: #2196F3; }
-
-        .multi-upload-tip {
-            color: #cec5b1;
-            font-size: 14px;
-            margin: 10px 0;
-            padding: 8px;
-            background-color: rgba(51,51,51,0.5);
-            border-radius: 4px;
-        }
+        .action-btn:hover { opacity: 0.9; transform: translateY(-2px);}
 
         .loading {
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0,0,0,0.8);
-            color: #fff;
-            padding: 20px 40px;
-            border-radius: 8px;
-            z-index: 999;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 18px 32px;
+            border-radius: 48px;
+            z-index: 1000;
+            font-weight: 500;
+            backdrop-filter: blur(8px);
             display: none;
         }
 
-        .image-item.drag-over {
-            background-color: rgba(33, 150, 243, 0.2);
-            outline: 2px dashed #2196F3;
-        }
-        .image-item.dragging {
-            opacity: 0.5;
-            transform: scale(0.98);
-            z-index: 10;
-        }
-
-        @media (max-width: 768px) {
-            .action-area { flex-direction: column; bottom: 20px; right: 20px; }
-            .image-item {
-                max-width: 90vw;
-            }
-            .image-item img {
-                max-width: 90vw;
-            }
+        @media (max-width: 720px) {
+            body { padding: 1rem; }
+            .action-area { bottom: 16px; right: 16px; left: 16px; justify-content: center; flex-wrap: wrap; border-radius: 32px; gap: 8px;}
+            .title-input { font-size: 24px; }
+            #exportTitle { font-size: 26px; }
+            .action-icon { width: 30px; height: 30px; font-size: 18px;}
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-    <div class="loading" id="loading">处理中，请稍候...</div>
+<div class="content-wrapper">
+    <div class="loading" id="loading">✨ 正在排版瀑布流，请稍等...</div>
 
     <div class="title-container">
-        <input type="text" class="title-input" id="titleInput" placeholder="输入自定义标题" value="自定义文字">
-        <button class="custom-btn" id="customBtn">确认</button>
-        <div class="title-display" id="titleDisplay" style="display:none;">自定义文字</div>
+        <input type="text" class="title-input" id="titleInput" placeholder="输入主标题" value="📋 今日工作汇总">
+        <button class="custom-btn" id="customBtn">确认标题</button>
+        <div id="titleDisplay" style="display:none;">📋 今日工作汇总</div>
     </div>
 
+    <!-- 布局方向 (固定为瀑布流，展示当前模式) -->
     <div class="layout-selector">
-        <div class="layout-label">布局方向：</div>
-        <button class="layout-btn active" data-layout="horizontal">拼接图片</button>
+        <div class="layout-label">✨ 布局模式：</div>
+        <button class="layout-btn active" style="background:#2196F3;">🌊 瀑布流 · 紧凑错落</button>
     </div>
 
     <div class="settings-panel">
         <div class="setting-item">
-            <label class="setting-label">图片间距(px)：</label>
-            <input type="number" class="setting-input" id="gapInput" value="15" min="0" max="100">
-            <input type="range" class="setting-slider" id="gapSlider" min="0" max="100" value="15">
+            <label class="setting-label">卡片间距(px)：</label>
+            <input type="number" class="setting-input" id="gapInput" value="12" min="0" max="40">
+            <input type="range" class="setting-slider" id="gapSlider" min="0" max="40" value="12">
         </div>
         <div class="setting-item">
             <label class="setting-label">圆角大小(px)：</label>
-            <input type="number" class="setting-input" id="radiusInput" value="0" min="0" max="100">
-            <input type="range" class="setting-slider" id="radiusSlider" min="0" max="100" value="0">
+            <input type="number" class="setting-input" id="radiusInput" value="16" min="0" max="40">
+            <input type="range" class="setting-slider" id="radiusSlider" min="0" max="40" value="16">
         </div>
-        <button class="apply-btn" id="applySettingsBtn">确认设置</button>
+        <button class="apply-btn" id="applySettingsBtn">应用 & 重排</button>
     </div>
 
-    <button class="add-image-btn" id="addImageBtn">+ 添加新图片</button>
-    <div class="multi-upload-tip">✨ 拖拽图片到任意框上传 | 超过700px自动等比例缩小</div>
+    <button class="add-image-btn" id="addImageBtn">+ 添加新卡片</button>
+    <div class="multi-upload-tip">✨ 拖拽图片到任意卡片上传 | 自动保持原始比例 | 支持多图追加</div>
 
-    <div id="export-container">
-        <div class="title-display" id="exportTitle">自定义文字</div>
-        <div class="image-container horizontal" id="imageContainer">
-            <div class="image-item" id="imageBox1" data-index="1" draggable="true">
-                <div class="image-actions">
-                    <button class="action-icon add-icon" title="在当前图片后插入图片">+</button>
-                    <button class="action-icon delete-icon" title="删除当前图片">×</button>
-                </div>
-                <div class="placeholder">
-                    <img src="placeholder-icon.png" alt="" class="placeholder-icon" onerror="this.style.display='none'">
-                    <div>拖拽图片上传</div>
-                </div>
-            </div>
-        </div>
+    <!-- 导出容器：包含标题 + 瀑布流区域 -->
+    <div id="export-container" style="background-color: #25242b; border-radius: 24px; padding: 24px; margin-top: 12px;">
+        <div id="exportTitle">📋 今日工作汇总</div>
+        <div id="masonryRoot" class="masonry-container"></div>
     </div>
+</div>
 
-    <div class="action-area">
-        <div class="quality-select">
-            <button class="quality-btn" data-quality="standard">标清</button>
-            <button class="quality-btn" data-quality="hd">高清</button>
-            <button class="quality-btn active" data-quality="lossless">无损PNG</button>
-        </div>
-        <button class="action-btn download-btn" id="downloadBtn">下载整图</button>
-        <button class="action-btn copy-btn" id="copyBtn">复制整图</button>
+<div class="action-area">
+    <div class="quality-select">
+        <button class="quality-btn" data-quality="standard">标清 JPG</button>
+        <button class="quality-btn" data-quality="hd">高清 JPG</button>
+        <button class="quality-btn active" data-quality="lossless">无损 PNG</button>
     </div>
+    <button class="action-btn download-btn" id="downloadBtn">⬇️ 下载整图</button>
+    <button class="action-btn copy-btn" id="copyBtn">📋 复制整图</button>
+</div>
 
-    <script>
-        (function() {
-            let imageBase64List = { 1: '' };
-            let selectedQuality = 'lossless';
-            let isInserting = false;
-
-            // ====================== 核心修改 ======================
-            // 超过 700px 等比例缩小，小于等于 700px 保持原图
-            const MAX_IMG_WIDTH = 700;
-            const MAX_IMG_HEIGHT = 700;
-            // ======================================================
-
-            const titleInput = document.getElementById('titleInput');
-            const exportTitle = document.getElementById('exportTitle');
-            const loading = document.getElementById('loading');
-            const customBtn = document.getElementById('customBtn');
-            const imageContainer = document.getElementById('imageContainer');
-            const gapInput = document.getElementById('gapInput');
-            const gapSlider = document.getElementById('gapSlider');
-            const radiusInput = document.getElementById('radiusInput');
-            const radiusSlider = document.getElementById('radiusSlider');
-            const applySettingsBtn = document.getElementById('applySettingsBtn');
-            const addImageBtn = document.getElementById('addImageBtn');
-
-            let dragSource = null;
-
-            // 等比例压缩图片：超过700缩小，不超过保持原图
-            function compressImageBySize(file) {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = new Image();
-                        img.src = e.target.result;
-                        img.onload = function() {
-                            let w = img.width;
-                            let h = img.height;
-
-                            // 超过700才等比例缩小
-                            if (w > MAX_IMG_WIDTH || h > MAX_IMG_HEIGHT) {
-                                const scale = Math.min(MAX_IMG_WIDTH / w, MAX_IMG_HEIGHT / h);
-                                w = Math.floor(w * scale);
-                                h = Math.floor(h * scale);
-                            }
-
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            canvas.width = w;
-                            canvas.height = h;
-                            ctx.drawImage(img, 0, 0, w, h);
-                            const compressedBase64 = canvas.toDataURL('image/png', 1.0);
-                            resolve(compressedBase64);
-                        };
-                        img.onerror = () => resolve(e.target.result);
+<script>
+    (function() {
+        // ---------- 核心数据 ----------
+        let imagesData = [];
+        let selectedQuality = 'lossless';
+        
+        // 布局参数
+        let gap = 12;
+        let borderRadius = 16;
+        
+        // DOM
+        const masonryRoot = document.getElementById('masonryRoot');
+        const loadingEl = document.getElementById('loading');
+        const titleInput = document.getElementById('titleInput');
+        const exportTitle = document.getElementById('exportTitle');
+        const customBtn = document.getElementById('customBtn');
+        const gapInput = document.getElementById('gapInput');
+        const gapSlider = document.getElementById('gapSlider');
+        const radiusInput = document.getElementById('radiusInput');
+        const radiusSlider = document.getElementById('radiusSlider');
+        const applySettingsBtn = document.getElementById('applySettingsBtn');
+        const addImageBtn = document.getElementById('addImageBtn');
+        
+        // 图片压缩
+        const MAX_IMG_WIDTH = 1000;
+        const MAX_IMG_HEIGHT = 1200;
+        
+        function compressImageBySize(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > MAX_IMG_WIDTH || h > MAX_IMG_HEIGHT) {
+                            const scale = Math.min(MAX_IMG_WIDTH / w, MAX_IMG_HEIGHT / h);
+                            w = Math.floor(w * scale);
+                            h = Math.floor(h * scale);
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const compressed = canvas.toDataURL('image/png', 1.0);
+                        resolve(compressed);
                     };
-                    reader.onerror = () => { alert('读取失败'); resolve(''); };
-                    reader.readAsDataURL(file);
-                });
-            }
-
-            function getImageCount() {
-                return document.querySelectorAll('.image-item').length;
-            }
-
-            function reindexImageBoxes() {
-                const allItems = Array.from(imageContainer.children).filter(el => el.classList.contains('image-item'));
-                const newBase64Map = {};
-                allItems.forEach((box, idx) => {
-                    const newIndex = idx + 1;
-                    const oldIndex = box.dataset.index;
-                    if (oldIndex && imageBase64List[oldIndex] !== undefined) {
-                        newBase64Map[newIndex] = imageBase64List[oldIndex];
-                    } else {
-                        newBase64Map[newIndex] = '';
-                    }
-                    box.id = `imageBox${newIndex}`;
-                    box.dataset.index = newIndex;
-                });
-                imageBase64List = newBase64Map;
-
-                allItems.forEach(box => {
-                    const idx = box.dataset.index;
-                    const base64 = imageBase64List[idx];
-                    const existingImg = box.querySelector('img:not(.placeholder-icon)');
-                    const placeholder = box.querySelector('.placeholder');
-                    if (base64) {
-                        if (placeholder) placeholder.remove();
-                        if (existingImg) {
-                            existingImg.src = base64;
-                        } else {
-                            const img = document.createElement('img');
-                            img.src = base64;
-                            const actions = box.querySelector('.image-actions');
-                            if (actions) box.insertBefore(img, actions.nextSibling);
-                            else box.appendChild(img);
-                        }
-                    } else {
-                        if (existingImg) existingImg.remove();
-                        if (!placeholder) {
-                            const ph = document.createElement('div');
-                            ph.className = 'placeholder';
-                            ph.innerHTML = '<img src="placeholder-icon.png" alt="" class="placeholder-icon" onerror="this.style.display=\'none\'"><div>拖拽图片上传</div>';
-                            box.appendChild(ph);
-                        }
-                    }
-                });
-
-                initDragDropSwap();
-                initImageBoxEvents();
-            }
-
-            function createImageBox(index, insertBefore = null) {
-                const box = document.createElement('div');
-                box.className = 'image-item';
-                box.id = `imageBox${index}`;
-                box.dataset.index = index;
-                box.draggable = true;
-                box.innerHTML = `
-                    <div class="image-actions">
-                        <button class="action-icon add-icon">+</button>
-                        <button class="action-icon delete-icon">×</button>
-                    </div>
-                    <div class="placeholder">
-                        <img src="placeholder-icon.png" alt="" class="placeholder-icon" onerror="this.style.display='none'">
-                        <div>拖拽图片上传</div>
-                    </div>
-                `;
-                if (insertBefore) {
-                    imageContainer.insertBefore(box, insertBefore);
-                } else {
-                    imageContainer.appendChild(box);
-                }
-                imageBase64List[index] = '';
-                updatePreview();
-                return box;
-            }
-
-            function addNewImage() {
-                if (isInserting) return;
-                isInserting = true;
-                try {
-                    const newIndex = getImageCount() + 1;
-                    createImageBox(newIndex);
-                    initDragDropSwap();
-                    initImageBoxEvents();
-                } finally {
-                    isInserting = false;
-                }
-            }
-
-            function insertImageAfter(targetIndex) {
-                if (isInserting) return;
-                isInserting = true;
-                try {
-                    const targetBox = document.getElementById(`imageBox${targetIndex}`);
-                    if (!targetBox) return;
-                    const nextSibling = targetBox.nextElementSibling;
-                    const newIndex = getImageCount() + 1;
-                    const newBox = createImageBox(newIndex, nextSibling);
-                    reindexImageBoxes();
-                } finally {
-                    isInserting = false;
-                }
-            }
-
-            function deleteImage(index) {
-                if (isInserting) return false;
-                isInserting = true;
-                try {
-                    if (getImageCount() <= 1) { alert('至少保留一张图片容器'); return false; }
-                    const box = document.getElementById(`imageBox${index}`);
-                    if (box) {
-                        delete imageBase64List[index];
-                        box.remove();
-                        reindexImageBoxes();
-                        return true;
-                    }
-                    return false;
-                } finally {
-                    isInserting = false;
-                }
-            }
-
-            function renderImage(index, base64) {
-                const box = document.getElementById(`imageBox${index}`);
-                if (!box || !base64) return;
-                const placeholder = box.querySelector('.placeholder');
-                if (placeholder) placeholder.remove();
-                let img = box.querySelector('img:not(.placeholder-icon)');
-                if (img) {
-                    img.src = base64;
-                } else {
-                    img = document.createElement('img');
-                    img.src = base64;
-                    const actions = box.querySelector('.image-actions');
-                    if (actions) box.insertBefore(img, actions.nextSibling);
-                    else box.appendChild(img);
-                }
-            }
-
-            function syncTitle() {
-                exportTitle.textContent = titleInput.value.trim() || '自定义文字';
-            }
-
-            function syncInputAndSlider() {
-                let gap = Math.max(0, Math.min(100, parseInt(gapInput.value) || 15));
-                gapInput.value = gap; gapSlider.value = gap;
-                let rad = Math.max(0, Math.min(100, parseInt(radiusInput.value) || 0));
-                radiusInput.value = rad; radiusSlider.value = rad;
-            }
-
-            function updatePreview() {
-                syncInputAndSlider();
-                const gap = parseInt(gapInput.value);
-                const rad = parseInt(radiusInput.value);
-                imageContainer.style.gap = gap + 'px';
-                document.querySelectorAll('.image-item').forEach(item => {
-                    item.style.borderRadius = rad + 'px';
-                });
-            }
-
-            function applySettings() {
-                updatePreview();
-                alert(`间距 ${gapInput.value}px，圆角 ${radiusInput.value}px 已应用`);
-            }
-
-            async function handleFilesToTarget(files, targetIndex) {
-                const imageFiles = Array.from(files).filter(f => f.type.includes('image/'));
-                if (imageFiles.length === 0) {
-                    alert('没有图片文件');
+                    img.onerror = () => resolve(e.target.result);
+                };
+                reader.onerror = () => { alert('文件读取失败'); resolve(''); };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function initDefaultData() {
+            imagesData = [{ src: '' }];
+        }
+        initDefaultData();
+        
+        function syncTitle() {
+            let val = titleInput.value.trim();
+            if (val === '') val = '📋 今日工作汇总';
+            exportTitle.textContent = val;
+        }
+        
+        function getCardHeightFromImage(imgSrc, cardWidth) {
+            return new Promise((resolve) => {
+                if (!imgSrc) {
+                    resolve(180);
                     return;
                 }
-
-                loading.style.display = 'block';
-
-                const firstFile = imageFiles[0];
-                let base64 = await compressImageBySize(firstFile);
-                if (base64) {
-                    renderImage(targetIndex, base64);
-                    imageBase64List[targetIndex] = base64;
-                }
-
-                for (let i = 1; i < imageFiles.length; i++) {
-                    const file = imageFiles[i];
-                    let emptyIdx = null;
-                    for (let j = 1; j <= getImageCount(); j++) {
-                        if (!imageBase64List[j]) {
-                            emptyIdx = j;
-                            break;
-                        }
-                    }
-                    if (emptyIdx === null) {
-                        addNewImage();
-                        emptyIdx = getImageCount();
-                    }
-                    base64 = await compressImageBySize(file);
-                    if (base64) {
-                        renderImage(emptyIdx, base64);
-                        imageBase64List[emptyIdx] = base64;
-                    }
-                }
-
-                loading.style.display = 'none';
-                initImageBoxEvents();
-            }
-
-            function initImageBoxEvents() {
-                const boxes = document.querySelectorAll('.image-item');
-                boxes.forEach(box => {
-                    const idx = box.dataset.index;
-                    const addIcon = box.querySelector('.add-icon');
-                    const delIcon = box.querySelector('.delete-icon');
-                    if (addIcon) addIcon.onclick = (e) => { e.stopPropagation(); insertImageAfter(parseInt(idx)); };
-                    if (delIcon) delIcon.onclick = (e) => { e.stopPropagation(); if (confirm('删除此图片框？')) deleteImage(parseInt(idx)); };
-
-                    box.removeEventListener('dragover', box._dragoverHandler);
-                    box.removeEventListener('dragleave', box._dragleaveHandler);
-                    box.removeEventListener('drop', box._dropHandler);
-
-                    const dragoverHandler = (e) => {
-                        if (e.dataTransfer.types.includes('Files') && !dragSource) {
-                            e.preventDefault();
-                            box.classList.add('drag-over');
-                        }
+                const tempImg = new Image();
+                tempImg.src = imgSrc;
+                if (tempImg.complete) {
+                    const ratio = tempImg.height / tempImg.width;
+                    resolve(cardWidth * ratio);
+                } else {
+                    tempImg.onload = () => {
+                        const ratio = tempImg.height / tempImg.width;
+                        resolve(cardWidth * ratio);
                     };
-                    const dragleaveHandler = (e) => {
-                        if (e.dataTransfer.types.includes('Files') && !dragSource) box.classList.remove('drag-over');
-                    };
-                    const dropHandler = (e) => {
-                        if (e.dataTransfer.types.includes('Files') && !dragSource) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            box.classList.remove('drag-over');
-                            const files = e.dataTransfer.files;
-                            if (files.length > 0) {
-                                handleFilesToTarget(files, idx);
-                            }
-                        }
-                    };
-
-                    box._dragoverHandler = dragoverHandler;
-                    box._dragleaveHandler = dragleaveHandler;
-                    box._dropHandler = dropHandler;
-
-                    box.addEventListener('dragover', dragoverHandler);
-                    box.addEventListener('dragleave', dragleaveHandler);
-                    box.addEventListener('drop', dropHandler);
-                });
-            }
-
-            function initDragDropSwap() {
-                const boxes = document.querySelectorAll('.image-item');
-                boxes.forEach(box => {
-                    const newBox = box.cloneNode(true);
-                    box.parentNode.replaceChild(newBox, box);
-                });
-                const newBoxes = document.querySelectorAll('.image-item');
-                newBoxes.forEach(box => {
-                    box.addEventListener('dragstart', e => {
-                        dragSource = box;
-                        box.classList.add('dragging');
-                        e.dataTransfer.setData('text/plain', box.dataset.index);
-                    });
-                    box.addEventListener('dragend', () => {
-                        box.classList.remove('dragging');
-                        dragSource = null;
-                        document.querySelectorAll('.image-item').forEach(b => b.classList.remove('drag-over'));
-                    });
-                    box.addEventListener('dragover', e => {
-                        e.preventDefault();
-                        if (box !== dragSource) box.classList.add('drag-over');
-                    });
-                    box.addEventListener('dragleave', () => box.classList.remove('drag-over'));
-                    box.addEventListener('drop', e => {
-                        e.preventDefault();
-                        if (e.dataTransfer.types.includes('Files') && !dragSource) return;
-
-                        box.classList.remove('drag-over');
-                        if (!dragSource || box === dragSource) return;
-                        const srcIdx = dragSource.dataset.index;
-                        const tgtIdx = box.dataset.index;
-                        [imageBase64List[srcIdx], imageBase64List[tgtIdx]] = [imageBase64List[tgtIdx], imageBase64List[srcIdx]];
-                        renderImage(srcIdx, imageBase64List[srcIdx]);
-                        renderImage(tgtIdx, imageBase64List[tgtIdx]);
-                        initImageBoxEvents();
-                    });
-                });
-                initImageBoxEvents();
-            }
-
-            function getQualityConfig() {
-                switch(selectedQuality) {
-                    case 'standard': return { scale: 1, quality: 0.7, type: 'image/jpeg', suffix: '标清' };
-                    case 'hd': return { scale: 1, quality: 0.9, type: 'image/jpeg', suffix: '高清' };
-                    default: return { scale: 1, quality: 1.0, type: 'image/png', suffix: '无损' };
+                    tempImg.onerror = () => resolve(200);
                 }
-            }
-
-            async function copyImageToClipboard() {
-                const cfg = getQualityConfig();
-                const container = document.getElementById('export-container');
+            });
+        }
+        
+        async function renderMasonry() {
+            if (!masonryRoot) return;
+            const containerWidth = masonryRoot.clientWidth;
+            if (containerWidth <= 0) return;
+            
+            let columns = 2;
+            if (containerWidth >= 1200) columns = 4;
+            else if (containerWidth >= 800) columns = 3;
+            else if (containerWidth >= 500) columns = 2;
+            else columns = 1;
+            
+            const totalGapWidth = (columns - 1) * gap;
+            const cardWidth = (containerWidth - totalGapWidth) / columns;
+            if (cardWidth <= 0) return;
+            
+            masonryRoot.style.height = 'auto';
+            masonryRoot.innerHTML = '';
+            
+            const cardItems = [];
+            const cardPromises = [];
+            
+            for (let idx = 0; idx < imagesData.length; idx++) {
+                const item = imagesData[idx];
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'masonry-card';
+                cardDiv.setAttribute('data-index', idx);
+                cardDiv.style.width = `${cardWidth}px`;
+                cardDiv.style.borderRadius = `${borderRadius}px`;
+                cardDiv.style.background = '#2a2a2a';
+                cardDiv.style.cursor = 'grab';
+                cardDiv.draggable = true;
                 
-                const canvas = await html2canvas(container, { 
-                    scale: cfg.scale, 
-                    useCORS: true, 
-                    allowTaint: true, 
-                    logging: false,
-                    windowWidth: container.scrollWidth,
-                    windowHeight: container.scrollHeight,
-                    x: 0,
-                    y: 0,
-                    width: container.scrollWidth,
-                    height: container.scrollHeight,
-                    imageTimeout: 0,
-                    removeContainer: false
-                });
-                
-                if (navigator.clipboard && window.ClipboardItem) {
-                    const blob = await new Promise(resolve => canvas.toBlob(resolve, cfg.type, cfg.quality));
-                    try {
-                        await navigator.clipboard.write([new ClipboardItem({ [cfg.type]: blob })]);
-                        alert('整图已复制到剪贴板');
-                        return true;
-                    } catch (err) {
-                        console.warn('ClipboardItem 写入失败', err);
-                    }
-                }
-
-                try {
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'card-actions';
+                actionsDiv.innerHTML = `
+                    <button class="action-icon add-icon" title="在此卡片后插入新卡片">+</button>
+                    <button class="action-icon delete-icon" title="删除此卡片">×</button>
+                `;
+                const contentDiv = document.createElement('div');
+                if (item.src && item.src.startsWith('data:image')) {
                     const img = document.createElement('img');
-                    img.src = canvas.toDataURL(cfg.type, cfg.quality);
-                    img.style.position = 'fixed';
-                    img.style.top = '-9999px';
-                    document.body.appendChild(img);
-                    const range = document.createRange();
-                    range.selectNode(img);
-                    window.getSelection().removeAllRanges();
-                    window.getSelection().addRange(range);
-                    const success = document.execCommand('copy');
-                    window.getSelection().removeAllRanges();
-                    document.body.removeChild(img);
-                    if (success) {
-                        alert('整图已复制（传统方式）');
-                        return true;
-                    } else {
-                        throw new Error('execCommand 返回 false');
-                    }
-                } catch (e) {
-                    console.error('复制失败', e);
-                    if (confirm('复制失败，是否下载图片？')) {
-                        const link = document.createElement('a');
-                        link.download = `${exportTitle.textContent}_${cfg.suffix}.${cfg.type.split('/')[1]}`;
-                        link.href = canvas.toDataURL(cfg.type, cfg.quality);
-                        link.click();
-                    }
-                    return false;
+                    img.src = item.src;
+                    img.style.width = '100%';
+                    img.style.height = 'auto';
+                    img.style.display = 'block';
+                    contentDiv.appendChild(img);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'placeholder-card';
+                    placeholder.innerHTML = `
+                        <div>🖼️ 暂无图片</div>
+                        <div style="font-size:12px;">拖拽图片至此</div>
+                    `;
+                    contentDiv.appendChild(placeholder);
+                }
+                cardDiv.appendChild(contentDiv);
+                cardDiv.appendChild(actionsDiv);
+                
+                const cloneHolder = document.createElement('div');
+                cloneHolder.style.position = 'absolute';
+                cloneHolder.style.visibility = 'hidden';
+                cloneHolder.style.width = `${cardWidth}px`;
+                cloneHolder.appendChild(cardDiv.cloneNode(true));
+                document.body.appendChild(cloneHolder);
+                const actualHeight = cloneHolder.firstChild.offsetHeight;
+                document.body.removeChild(cloneHolder);
+                
+                cardItems.push({
+                    dom: cardDiv,
+                    height: actualHeight,
+                    index: idx,
+                    src: item.src
+                });
+                
+                if (item.src && item.src.startsWith('data:image')) {
+                    const promise = new Promise((resolve) => {
+                        const testImg = new Image();
+                        testImg.src = item.src;
+                        if (testImg.complete) {
+                            const ratio = testImg.height / testImg.width;
+                            resolve(cardWidth * ratio);
+                        } else {
+                            testImg.onload = () => {
+                                const ratio = testImg.height / testImg.width;
+                                resolve(cardWidth * ratio);
+                            };
+                            testImg.onerror = () => resolve(actualHeight);
+                        }
+                    });
+                    cardPromises.push(promise.then(preciseH => {
+                        cardItems.find(c => c.index === idx).height = preciseH;
+                    }));
+                } else {
+                    cardPromises.push(Promise.resolve());
                 }
             }
-
-            function initAll() {
-                syncTitle();
-
-                customBtn.addEventListener('click', syncTitle);
-                titleInput.addEventListener('change', syncTitle);
-                gapInput.addEventListener('input', updatePreview);
-                gapSlider.addEventListener('input', e => { gapInput.value = e.target.value; updatePreview(); });
-                radiusInput.addEventListener('input', updatePreview);
-                radiusSlider.addEventListener('input', e => { radiusInput.value = e.target.value; updatePreview(); });
-                applySettingsBtn.addEventListener('click', applySettings);
-                addImageBtn.addEventListener('click', addNewImage);
-
-                document.querySelectorAll('.quality-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        selectedQuality = btn.dataset.quality;
-                    });
-                });
-
-                document.getElementById('downloadBtn').addEventListener('click', async () => {
-                    loading.style.display = 'block';
-                    try {
-                        const cfg = getQualityConfig();
-                        const container = document.getElementById('export-container');
-                        const canvas = await html2canvas(container, { 
-                            scale: cfg.scale, 
-                            useCORS: true, 
-                            allowTaint: true, 
-                            logging: false,
-                            windowWidth: container.scrollWidth,
-                            windowHeight: container.scrollHeight,
-                            x: 0,
-                            y: 0,
-                            width: container.scrollWidth,
-                            height: container.scrollHeight,
-                            imageTimeout: 0,
-                            removeContainer: false
-                        });
-                        const link = document.createElement('a');
-                        link.download = `${exportTitle.textContent}_${cfg.suffix}.${cfg.type.split('/')[1]}`;
-                        link.href = canvas.toDataURL(cfg.type, cfg.quality);
-                        link.click();
-                    } catch (e) { alert('下载失败：' + e.message); } finally { loading.style.display = 'none'; }
-                });
-
-                document.getElementById('copyBtn').addEventListener('click', async () => {
-                    loading.style.display = 'block';
-                    try {
-                        await copyImageToClipboard();
-                    } catch (e) {
-                        alert('复制异常：' + e.message);
-                    } finally {
-                        loading.style.display = 'none';
+            
+            await Promise.all(cardPromises);
+            
+            const colHeights = new Array(columns).fill(0);
+            const positions = new Array(cardItems.length).fill({ left: 0, top: 0 });
+            
+            for (let i = 0; i < cardItems.length; i++) {
+                const card = cardItems[i];
+                let minCol = 0;
+                let minHeight = colHeights[0];
+                for (let c = 1; c < columns; c++) {
+                    if (colHeights[c] < minHeight) {
+                        minHeight = colHeights[c];
+                        minCol = c;
                     }
-                });
-
-                initImageBoxEvents();
-                initDragDropSwap();
-                updatePreview();
+                }
+                const leftPos = minCol * (cardWidth + gap);
+                const topPos = minHeight;
+                positions[i] = { left: leftPos, top: topPos };
+                colHeights[minCol] += card.height + gap;
             }
+            
+            const totalHeight = Math.max(...colHeights) - gap;
+            masonryRoot.style.height = `${totalHeight}px`;
+            
+            masonryRoot.innerHTML = '';
+            for (let i = 0; i < cardItems.length; i++) {
+                const card = cardItems[i];
+                const finalCard = card.dom;
+                finalCard.style.position = 'absolute';
+                finalCard.style.left = `${positions[i].left}px`;
+                finalCard.style.top = `${positions[i].top}px`;
+                finalCard.style.width = `${cardWidth}px`;
+                finalCard.style.borderRadius = `${borderRadius}px`;
+                finalCard.style.transition = 'left 0.2s ease, top 0.2s ease';
+                finalCard.setAttribute('data-index', i);
+                masonryRoot.appendChild(finalCard);
+            }
+            
+            bindCardEvents();
+        }
+        
+        function bindCardEvents() {
+            masonryRoot.removeEventListener('click', handleCardClick);
+            masonryRoot.removeEventListener('dragover', handleDragOver);
+            masonryRoot.removeEventListener('dragleave', handleDragLeave);
+            masonryRoot.removeEventListener('drop', handleCardDrop);
+            masonryRoot.removeEventListener('dragstart', handleDragStart);
+            masonryRoot.removeEventListener('dragend', handleDragEnd);
+            
+            masonryRoot.addEventListener('click', handleCardClick);
+            masonryRoot.addEventListener('dragover', handleDragOver);
+            masonryRoot.addEventListener('dragleave', handleDragLeave);
+            masonryRoot.addEventListener('drop', handleCardDrop);
+            masonryRoot.addEventListener('dragstart', handleDragStart);
+            masonryRoot.addEventListener('dragend', handleDragEnd);
+        }
+        
+        let dragSourceIndex = null;
+        
+        function handleDragStart(e) {
+            const card = e.target.closest('.masonry-card');
+            if (!card) return;
+            dragSourceIndex = parseInt(card.getAttribute('data-index'));
+            e.dataTransfer.setData('text/plain', dragSourceIndex);
+            e.dataTransfer.effectAllowed = 'move';
+            card.style.opacity = '0.6';
+        }
+        function handleDragEnd(e) {
+            const card = e.target.closest('.masonry-card');
+            if (card) card.style.opacity = '';
+            dragSourceIndex = null;
+            document.querySelectorAll('.masonry-card').forEach(c => c.classList.remove('drag-over'));
+        }
+        function handleDragOver(e) {
+            e.preventDefault();
+            const targetCard = e.target.closest('.masonry-card');
+            if (targetCard && dragSourceIndex !== null && parseInt(targetCard.getAttribute('data-index')) !== dragSourceIndex) {
+                targetCard.classList.add('drag-over');
+            }
+        }
+        function handleDragLeave(e) {
+            const targetCard = e.target.closest('.masonry-card');
+            if (targetCard) targetCard.classList.remove('drag-over');
+        }
+        async function handleCardDrop(e) {
+            e.preventDefault();
+            const targetCard = e.target.closest('.masonry-card');
+            if (targetCard) targetCard.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0 && dragSourceIndex === null) {
+                const targetIdx = targetCard ? parseInt(targetCard.getAttribute('data-index')) : 0;
+                if (!isNaN(targetIdx)) {
+                    await handleFilesToTarget(Array.from(files), targetIdx);
+                }
+                return;
+            }
+            
+            if (dragSourceIndex !== null && targetCard) {
+                const targetIdx = parseInt(targetCard.getAttribute('data-index'));
+                if (!isNaN(targetIdx) && dragSourceIndex !== targetIdx) {
+                    const newData = [...imagesData];
+                    [newData[dragSourceIndex], newData[targetIdx]] = [newData[targetIdx], newData[dragSourceIndex]];
+                    imagesData = newData;
+                    await fullRefresh();
+                }
+            }
+        }
+        
+        async function handleFilesToTarget(files, targetIndex) {
+            const imageFiles = files.filter(f => f.type.startsWith('image/'));
+            if (imageFiles.length === 0) return;
+            loadingEl.style.display = 'block';
+            const firstFile = imageFiles[0];
+            let base64 = await compressImageBySize(firstFile);
+            if (base64) imagesData[targetIndex].src = base64;
+            for (let i = 1; i < imageFiles.length; i++) {
+                const newBase64 = await compressImageBySize(imageFiles[i]);
+                if (newBase64) {
+                    imagesData.push({ src: newBase64 });
+                }
+            }
+            await fullRefresh();
+            loadingEl.style.display = 'none';
+        }
+        
+        async function handleCardClick(e) {
+            const addBtn = e.target.closest('.add-icon');
+            const delBtn = e.target.closest('.delete-icon');
+            const card = e.target.closest('.masonry-card');
+            if (!card) return;
+            const idx = parseInt(card.getAttribute('data-index'));
+            if (isNaN(idx)) return;
+            
+            if (addBtn) {
+                imagesData.splice(idx + 1, 0, { src: '' });
+                await fullRefresh();
+            } else if (delBtn) {
+                if (imagesData.length <= 1) {
+                    alert('至少保留一张卡片');
+                    return;
+                }
+                imagesData.splice(idx, 1);
+                await fullRefresh();
+            }
+        }
+        
+        async function fullRefresh() {
+            loadingEl.style.display = 'block';
+            syncTitle();
+            imagesData = imagesData.map(item => ({ src: item.src || '' }));
+            await renderMasonry();
+            loadingEl.style.display = 'none';
+        }
+        
+        async function addNewCard() {
+            imagesData.push({ src: '' });
+            await fullRefresh();
+        }
+        
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (masonryRoot) fullRefresh();
+            }, 150);
+        });
 
-            window.addEventListener('DOMContentLoaded', initAll);
+        // ==============================================
+        // ✅ 优化核心：只同步数值，不重排 → 松开才重排
+        // ==============================================
+        function syncSliderAndInput() {
+            let newGap = parseInt(gapInput.value) || 12;
+            let newRadius = parseInt(radiusInput.value) || 16;
+            newGap = Math.min(40, Math.max(0, newGap));
+            newRadius = Math.min(40, Math.max(0, newRadius));
+            
+            gap = newGap;
+            borderRadius = newRadius;
+            
+            gapInput.value = gap;
+            gapSlider.value = gap;
+            radiusInput.value = borderRadius;
+            radiusSlider.value = borderRadius;
+        }
+
+        // 滑块拖动时：只同步数字，不重排
+        gapSlider.addEventListener('input', () => {
+            gapInput.value = gapSlider.value;
+            syncSliderAndInput();
+        });
+        gapInput.addEventListener('input', syncSliderAndInput);
+        radiusSlider.addEventListener('input', () => {
+            radiusInput.value = radiusSlider.value;
+            syncSliderAndInput();
+        });
+        radiusInput.addEventListener('input', syncSliderAndInput);
+
+        // 滑块松开时：才重排
+        gapSlider.addEventListener('change', fullRefresh);
+        radiusSlider.addEventListener('change', fullRefresh);
+
+        // 应用按钮
+        applySettingsBtn.addEventListener('click', fullRefresh);
+        
+        // 其他不变
+        addImageBtn.addEventListener('click', addNewCard);
+        customBtn.addEventListener('click', syncTitle);
+        titleInput.addEventListener('change', syncTitle);
+        
+        document.querySelectorAll('.quality-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedQuality = btn.dataset.quality;
+            });
+        });
+        
+        async function captureExport() {
+            const container = document.getElementById('export-container');
+            const cfg = (() => {
+                switch(selectedQuality) {
+                    case 'standard': return { scale: 2, quality: 0.75, type: 'image/jpeg' };
+                    case 'hd': return { scale: 2.5, quality: 0.92, type: 'image/jpeg' };
+                    default: return { scale: 2.5, quality: 1, type: 'image/png' };
+                }
+            })();
+            const canvas = await html2canvas(container, {
+                scale: cfg.scale,
+                useCORS: true,
+                backgroundColor: '#25242b',
+                logging: false,
+            });
+            return canvas;
+        }
+        
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            loadingEl.style.display = 'block';
+            try {
+                const canvas = await captureExport();
+                const link = document.createElement('a');
+                const ext = selectedQuality === 'lossless' ? 'png' : 'jpg';
+                link.download = `${exportTitle.textContent}_瀑布墙.${ext}`;
+                link.href = canvas.toDataURL(selectedQuality === 'lossless' ? 'image/png' : 'image/jpeg', selectedQuality === 'lossless' ? 1 : 0.92);
+                link.click();
+            } catch(e) { alert('导出失败'); } finally { loadingEl.style.display = 'none'; }
+        });
+        document.getElementById('copyBtn').addEventListener('click', async () => {
+            loadingEl.style.display = 'block';
+            try {
+                const canvas = await captureExport();
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                alert('✅ 整图已复制到剪贴板');
+            } catch(e) {
+                alert('复制失败，可尝试下载');
+            } finally { loadingEl.style.display = 'none'; }
+        });
+        
+        (async () => {
+            await fullRefresh();
         })();
-    </script>
+    })();
+</script>
 </body>
 </html>
