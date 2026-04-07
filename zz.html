@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>今日工作汇总</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #1f1e25;
+            padding: 1.2rem 1rem;
+            font-family: system-ui, "Microsoft YaHei", "Segoe UI", sans-serif;
+            min-height: 100vh;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .content-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* 标题区 */
+        .title-container {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 0;
+        }
+        .title-input {
+            padding: 8px 12px;
+            font-size: 28px;
+            background-color: #333;
+            color: #cec5b1;
+            border: 1px solid #666;
+            border-radius: 12px;
+            width: 260px;
+            outline: none;
+            flex: 1;
+            max-width: 400px;
+            font-weight: 500;
+        }
+        .title-input:focus { border-color: #2196F3; box-shadow: 0 0 0 2px rgba(33,150,243,0.2);}
+        .custom-btn {
+            padding: 8px 18px;
+            border: 1px solid #666;
+            border-radius: 40px;
+            background-color: #333;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .custom-btn:hover { border-color: #2196F3; background-color: #444; transform: scale(0.97);}
+
+        /* 控制栏统一样式 */
+        .layout-selector, .settings-panel {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 12px 16px;
+            background-color: #292830;
+            border-radius: 20px;
+            width: 100%;
+        }
+        .layout-label, .setting-label { color: #cec5b1; font-size: 14px; font-weight: 500; min-width: 70px; }
+        .layout-btn {
+            padding: 6px 20px;
+            border: 1px solid #666;
+            border-radius: 40px;
+            background-color: #333;
+            color: #fff;
+            font-size: 14px;
+            cursor: default;
+            background: #2c3e66;
+            border-color: #2196F3;
+        }
+        .setting-input {
+            padding: 6px 10px;
+            font-size: 14px;
+            background-color: #333;
+            color: #cec5b1;
+            border: 1px solid #666;
+            border-radius: 8px;
+            width: 70px;
+            text-align: center;
+        }
+        .setting-slider {
+            flex: 1;
+            height: 5px;
+            background-color: #555;
+            border-radius: 5px;
+            -webkit-appearance: none;
+        }
+        .setting-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2196F3;
+            cursor: pointer;
+        }
+        .apply-btn {
+            padding: 6px 20px;
+            border: 1px solid #666;
+            border-radius: 40px;
+            background-color: #3a3a44;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .apply-btn:hover { background-color: #2196F3; border-color: #2196F3;}
+
+        .add-image-btn {
+            margin: 8px 0 6px;
+            padding: 10px 20px;
+            border: 1px solid #2196F3;
+            border-radius: 40px;
+            background-color: #333;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            width: fit-content;
+            font-weight: 500;
+        }
+        .add-image-btn:hover { background-color: #2196F3; transform: translateY(-2px);}
+        .multi-upload-tip {
+            color: #cec5b1;
+            font-size: 13px;
+            margin: 4px 0 12px 0;
+            padding: 6px 12px;
+            background-color: rgba(51,51,51,0.6);
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        /* 顺序排列容器 — 相对定位，所有卡片绝对定位 */
+        .masonry-container {
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+            transition: height 0.2s ease;
+        }
+
+        /* 单个卡片：绝对定位 + 圆角 + 过渡 */
+        .masonry-card {
+            position: absolute;
+            box-sizing: border-box;
+            transition: left 0.25s ease, top 0.25s ease, width 0.1s;
+            background-color: #2a2a2a;
+            border-radius: 0px;  /* 动态控制 */
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            cursor: grab;
+            user-select: none;
+        }
+        .masonry-card:active { cursor: grabbing; }
+        .masonry-card.drag-over {
+            outline: 3px solid #2196F3;
+            filter: brightness(1.05);
+            background-color: rgba(33,150,243,0.1);
+        }
+        .masonry-card img {
+            display: block;
+            width: 100%;
+            height: auto;
+            background-color: #1e1e24;
+            pointer-events: none;  /* 让按钮可点击穿透不影响 */
+            transition: opacity 0.2s;
+        }
+        /* 操作按钮悬浮层 */
+        .card-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 20;
+        }
+        .masonry-card:hover .card-actions {
+            opacity: 1;
+        }
+        .action-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            transition: all 0.2s;
+        }
+        .action-icon:hover {
+            background-color: #2196F3;
+            transform: scale(1.08);
+        }
+        .delete-icon:hover { background-color: #f44336; }
+
+        /* 空白占位符 (无图片时) */
+        .placeholder-card {
+            width: 100%;
+            height: 100%;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #2a2a2a;
+            color: #aaa;
+            gap: 12px;
+            font-size: 14px;
+            text-align: center;
+            pointer-events: none;
+        }
+        .placeholder-icon {
+            width: 48px;
+            height: 48px;
+            opacity: 0.6;
+        }
+
+        #exportTitle {
+            color: #cec5b1;
+            font-size: 32px;
+            font-weight: 600;
+            margin: 0 0 18px 0;
+            padding: 0 0 8px 0;
+            line-height: 1.2;
+            word-break: break-word;
+            border-bottom: 2px solid rgba(33,150,243,0.4);
+            display: inline-block;
+        }
+
+        /* 右下角操作区 */
+        .action-area {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            gap: 12px;
+            z-index: 200;
+            background: rgba(31,30,37,0.92);
+            backdrop-filter: blur(12px);
+            padding: 12px 20px;
+            border-radius: 60px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .quality-select {
+            display: flex;
+            gap: 8px;
+            background-color: #2c2c34;
+            padding: 4px 10px;
+            border-radius: 40px;
+        }
+        .quality-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 30px;
+            font-size: 13px;
+            cursor: pointer;
+            background: #444;
+            color: #ddd;
+            transition: 0.2s;
+        }
+        .quality-btn.active { background-color: #2196F3; color: white; }
+        .action-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .download-btn { background-color: #2196F3; color: white; }
+        .copy-btn { background-color: #FF9800; color: white; }
+        .action-btn:hover { opacity: 0.9; transform: translateY(-2px);}
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 18px 32px;
+            border-radius: 48px;
+            z-index: 1000;
+            font-weight: 500;
+            backdrop-filter: blur(8px);
+            display: none;
+        }
+
+        @media (max-width: 720px) {
+            body { padding: 1rem; }
+            .action-area { bottom: 16px; right: 16px; left: 16px; justify-content: center; flex-wrap: wrap; border-radius: 32px; gap: 8px;}
+            .title-input { font-size: 24px; }
+            #exportTitle { font-size: 26px; }
+            .action-icon { width: 30px; height: 30px; font-size: 18px;}
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+<div class="content-wrapper">
+    <div class="loading" id="loading">✨ 正在排版，请稍等...</div>
+
+    <div class="title-container">
+        <input type="text" class="title-input" id="titleInput" placeholder="输入主标题" value="📋 今日工作汇总">
+        <button class="custom-btn" id="customBtn">确认标题</button>
+        <div id="titleDisplay" style="display:none;">📋 今日工作汇总</div>
+    </div>
+
+    <!-- 布局方向 -->
+    <div class="layout-selector">
+        <div class="layout-label">✨ 布局模式：</div>
+        <button class="layout-btn active" style="background:#2196F3;">📜 顺序排列 · 支持拖拽排序</button>
+    </div>
+
+    <div class="settings-panel">
+        <div class="setting-item">
+            <label class="setting-label">卡片间距(px)：</label>
+            <input type="number" class="setting-input" id="gapInput" value="12" min="0" max="40">
+            <input type="range" class="setting-slider" id="gapSlider" min="0" max="40" value="12">
+        </div>
+        <div class="setting-item">
+            <label class="setting-label">圆角大小(px)：</label>
+            <input type="number" class="setting-input" id="radiusInput" value="16" min="0" max="40">
+            <input type="range" class="setting-slider" id="radiusSlider" min="0" max="40" value="16">
+        </div>
+        <button class="apply-btn" id="applySettingsBtn">应用 & 重排</button>
+    </div>
+
+    <button class="add-image-btn" id="addImageBtn">+ 添加新卡片</button>
+    <div class="multi-upload-tip">✨ 拖拽图片到任意卡片上传 | 自动保持原始比例 | 支持多图追加</div>
+
+    <!-- 导出容器：包含标题 + 顺序排列区域 -->
+    <div id="export-container" style="background-color: #25242b; border-radius: 24px; padding: 24px; margin-top: 12px;">
+        <div id="exportTitle">📋 今日工作汇总</div>
+        <div id="masonryRoot" class="masonry-container"></div>
+    </div>
+</div>
+
+<div class="action-area">
+    <div class="quality-select">
+        <button class="quality-btn" data-quality="standard">标清 JPG</button>
+        <button class="quality-btn" data-quality="hd">高清 JPG</button>
+        <button class="quality-btn active" data-quality="lossless">无损 PNG</button>
+    </div>
+    <button class="action-btn download-btn" id="downloadBtn">⬇️ 下载整图</button>
+    <button class="action-btn copy-btn" id="copyBtn">📋 复制整图</button>
+</div>
+
+<script>
+    (function() {
+        // ---------- 核心数据 ----------
+        let imagesData = [];
+        let selectedQuality = 'lossless';
+        
+        // 布局参数
+        let gap = 12;
+        let borderRadius = 16;
+        
+        // DOM
+        const masonryRoot = document.getElementById('masonryRoot');
+        const loadingEl = document.getElementById('loading');
+        const titleInput = document.getElementById('titleInput');
+        const exportTitle = document.getElementById('exportTitle');
+        const customBtn = document.getElementById('customBtn');
+        const gapInput = document.getElementById('gapInput');
+        const gapSlider = document.getElementById('gapSlider');
+        const radiusInput = document.getElementById('radiusInput');
+        const radiusSlider = document.getElementById('radiusSlider');
+        const applySettingsBtn = document.getElementById('applySettingsBtn');
+        const addImageBtn = document.getElementById('addImageBtn');
+        
+        // 图片压缩
+        const MAX_IMG_WIDTH = 1000;
+        const MAX_IMG_HEIGHT = 1200;
+        
+        function compressImageBySize(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > MAX_IMG_WIDTH || h > MAX_IMG_HEIGHT) {
+                            const scale = Math.min(MAX_IMG_WIDTH / w, MAX_IMG_HEIGHT / h);
+                            w = Math.floor(w * scale);
+                            h = Math.floor(h * scale);
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const compressed = canvas.toDataURL('image/png', 1.0);
+                        resolve(compressed);
+                    };
+                    img.onerror = () => resolve(e.target.result);
+                };
+                reader.onerror = () => { alert('文件读取失败'); resolve(''); };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function initDefaultData() {
+            imagesData = [{ src: '' }];
+        }
+        initDefaultData();
+        
+        function syncTitle() {
+            let val = titleInput.value.trim();
+            if (val === '') val = '📋 今日工作汇总';
+            exportTitle.textContent = val;
+        }
+        
+        function getCardHeightFromImage(imgSrc, cardWidth) {
+            return new Promise((resolve) => {
+                if (!imgSrc) {
+                    resolve(180);
+                    return;
+                }
+                const tempImg = new Image();
+                tempImg.src = imgSrc;
+                if (tempImg.complete) {
+                    const ratio = tempImg.height / tempImg.width;
+                    resolve(cardWidth * ratio);
+                } else {
+                    tempImg.onload = () => {
+                        const ratio = tempImg.height / tempImg.width;
+                        resolve(cardWidth * ratio);
+                    };
+                    tempImg.onerror = () => resolve(200);
+                }
+            });
+        }
+        
+        async function renderMasonry() {
+            if (!masonryRoot) return;
+            const containerWidth = masonryRoot.clientWidth;
+            if (containerWidth <= 0) return;
+            
+            // 响应式列数
+            let columns = 2;
+            if (containerWidth >= 1200) columns = 4;
+            else if (containerWidth >= 800) columns = 3;
+            else if (containerWidth >= 500) columns = 2;
+            else columns = 1;
+            
+            const totalGapWidth = (columns - 1) * gap;
+            const cardWidth = (containerWidth - totalGapWidth) / columns;
+            if (cardWidth <= 0) return;
+            
+            masonryRoot.style.height = 'auto';
+            masonryRoot.innerHTML = '';
+            
+            const cardItems = [];
+            const cardPromises = [];
+            
+            // 生成卡片
+            for (let idx = 0; idx < imagesData.length; idx++) {
+                const item = imagesData[idx];
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'masonry-card';
+                cardDiv.setAttribute('data-index', idx);
+                cardDiv.style.width = `${cardWidth}px`;
+                cardDiv.style.borderRadius = `${borderRadius}px`;
+                cardDiv.style.background = '#2a2a2a';
+                cardDiv.draggable = true;
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'card-actions';
+                actionsDiv.innerHTML = `
+                    <button class="action-icon add-icon" title="在此卡片后插入">+</button>
+                    <button class="action-icon delete-icon" title="删除此卡片">×</button>
+                `;
+                const contentDiv = document.createElement('div');
+                if (item.src && item.src.startsWith('data:image')) {
+                    const img = document.createElement('img');
+                    img.src = item.src;
+                    img.style.width = '100%';
+                    img.style.height = 'auto';
+                    contentDiv.appendChild(img);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'placeholder-card';
+                    placeholder.innerHTML = `<div>🖼️ 暂无图片</div><div style="font-size:12px;">拖拽图片至此</div>`;
+                    contentDiv.appendChild(placeholder);
+                }
+                cardDiv.appendChild(contentDiv);
+                cardDiv.appendChild(actionsDiv);
+                
+                let heightPromise = item.src ? getCardHeightFromImage(item.src, cardWidth) : Promise.resolve(180);
+                cardPromises.push(heightPromise.then(height => {
+                    cardItems.push({ dom: cardDiv, height, index: idx });
+                }));
+            }
+            
+            await Promise.all(cardPromises);
+            
+            // ========== 顺序排列核心逻辑 ==========
+            const colHeights = new Array(columns).fill(0);
+            const positions = [];
+            let currentCol = 0;
+            
+            for (let i = 0; i < cardItems.length; i++) {
+                const card = cardItems[i];
+                const leftPos = currentCol * (cardWidth + gap);
+                const topPos = colHeights[currentCol];
+                positions.push({ left: leftPos, top: topPos });
+                colHeights[currentCol] += card.height + gap;
+                currentCol = (currentCol + 1) % columns;
+            }
+            
+            const totalHeight = Math.max(...colHeights) - gap;
+            masonryRoot.style.height = `${totalHeight}px`;
+            
+            // 渲染卡片
+            for (let i = 0; i < cardItems.length; i++) {
+                const c = cardItems[i];
+                const card = c.dom;
+                card.style.left = positions[i].left + 'px';
+                card.style.top = positions[i].top + 'px';
+                card.style.height = c.height + 'px';
+                masonryRoot.appendChild(card);
+            }
+            
+            bindDragEvents();
+        }
+
+        // ========== 拖拽排序核心 ==========
+        let dragIndex = -1;
+
+        function bindDragEvents() {
+            const cards = document.querySelectorAll('.masonry-card');
+            cards.forEach(card => {
+                card.ondragstart = (e) => {
+                    dragIndex = parseInt(card.dataset.index);
+                    card.style.opacity = '0.7';
+                };
+                card.ondragend = (e) => {
+                    card.style.opacity = '1';
+                    document.querySelectorAll('.masonry-card').forEach(c => c.classList.remove('drag-over'));
+                };
+                card.ondragover = (e) => e.preventDefault();
+                card.ondragenter = (e) => {
+                    e.preventDefault();
+                    card.classList.add('drag-over');
+                };
+                card.ondragleave = () => card.classList.remove('drag-over');
+                card.ondrop = (e) => {
+                    e.preventDefault();
+                    card.classList.remove('drag-over');
+                    const dropIndex = parseInt(card.dataset.index);
+                    if (dragIndex !== -1 && dragIndex !== dropIndex) {
+                        // 交换顺序
+                        const temp = imagesData[dragIndex];
+                        imagesData[dragIndex] = imagesData[dropIndex];
+                        imagesData[dropIndex] = temp;
+                        fullRefresh();
+                    }
+                };
+            });
+        }
+
+        // 点击事件
+        function handleCardClick(e) {
+            const card = e.target.closest('.masonry-card');
+            if (!card) return;
+            const idx = +card.dataset.index;
+            if (e.target.closest('.add-icon')) {
+                imagesData.splice(idx + 1, 0, { src: '' });
+                fullRefresh();
+            }
+            if (e.target.closest('.delete-icon')) {
+                if (imagesData.length <= 1) return alert('至少保留一张');
+                imagesData.splice(idx, 1);
+                fullRefresh();
+            }
+        }
+
+        // 拖入图片
+        async function handleDropImage(e) {
+            e.preventDefault();
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            if (files.length === 0) return;
+            const card = e.target.closest('.masonry-card');
+            const idx = card ? +card.dataset.index : 0;
+            loadingEl.style.display = 'block';
+            for (let i = 0; i < files.length; i++) {
+                const src = await compressImageBySize(files[i]);
+                if (i === 0) imagesData[idx].src = src;
+                else imagesData.push({ src });
+            }
+            fullRefresh();
+            loadingEl.style.display = 'none';
+        }
+
+        masonryRoot.addEventListener('click', handleCardClick);
+        masonryRoot.addEventListener('dragover', e => e.preventDefault());
+        masonryRoot.addEventListener('drop', handleDropImage);
+
+        async function fullRefresh() {
+            loadingEl.style.display = 'block';
+            syncTitle();
+            await renderMasonry();
+            loadingEl.style.display = 'none';
+        }
+
+        // 添加卡片
+        addImageBtn.onclick = () => { imagesData.push({ src: '' }); fullRefresh(); };
+
+        // 间距/圆角
+        function syncSlider() {
+            gap = Math.min(40, Math.max(0, +gapInput.value));
+            borderRadius = Math.min(40, Math.max(0, +radiusInput.value));
+            gapInput.value = gap; gapSlider.value = gap;
+            radiusInput.value = borderRadius; radiusSlider.value = borderRadius;
+        }
+        gapSlider.oninput = () => { gapInput.value = gapSlider.value; syncSlider(); };
+        radiusSlider.oninput = () => { radiusInput.value = radiusSlider.value; syncSlider(); };
+        gapInput.oninput = radiusInput.oninput = syncSlider;
+        applySettingsBtn.onclick = fullRefresh;
+        customBtn.onclick = titleInput.onchange = syncTitle;
+
+        // 导出
+        document.querySelectorAll('.quality-btn').forEach(b => {
+            b.onclick = () => {
+                document.querySelectorAll('.quality-btn').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                selectedQuality = b.dataset.quality;
+            };
+        });
+
+        async function exportCanvas() {
+            return await html2canvas(document.getElementById('export-container'), {
+                scale: 2.5, backgroundColor: '#25242b', useCORS: true, logging: false
+            });
+        }
+
+        downloadBtn.onclick = async () => {
+            loadingEl.style.display = 'block';
+            const canvas = await exportCanvas();
+            const a = document.createElement('a');
+            a.download = exportTitle.textContent + '_工作汇总.png';
+            a.href = canvas.toDataURL('image/png');
+            a.click();
+            loadingEl.style.display = 'none';
+        };
+
+        copyBtn.onclick = async () => {
+            loadingEl.style.display = 'block';
+            const canvas = await exportCanvas();
+            canvas.toBlob(async blob => {
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    alert('✅ 已复制到剪贴板');
+                } catch (e) { alert('复制失败'); }
+                loadingEl.style.display = 'none';
+            });
+        };
+
+        window.onresize = () => { clearTimeout(timer); timer = setTimeout(fullRefresh, 150); };
+        let timer;
+        fullRefresh();
+    })();
+</script>
+</body>
+</html>
